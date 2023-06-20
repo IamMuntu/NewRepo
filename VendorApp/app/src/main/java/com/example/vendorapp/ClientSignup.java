@@ -1,32 +1,43 @@
 package com.example.vendorapp;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -40,25 +51,29 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-public class ClientSignup extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener, View.OnClickListener {
+public class ClientSignup extends AppCompatActivity implements View.OnClickListener {
     private static final int IMG_PICK_CODE = 99;
     private ImageView coordinates;
     public Double longitude, latitude;
     private String address;
     private EditText name, email, phonenumber, pass, repass, addres;
-    private String sname, semail, sphonenumber, spass, srepass,city,state,country,district;
+    private String sname, semail, sphonenumber, spass, srepass,sdob, city, state, country, district;
     private TextView vendorsignup;
     public ProgressDialog progressDialog;
     public FirebaseAuth mAuth;
     FirebaseStorage mStorage;
     private ImageView profile, back;
+    private EditText edtTxtDOB;
+    private Button btnPickBirthDate;
     Uri choosenimg = null;
     Button signup;
+    private Calendar DOBcalendar = Calendar.getInstance();
     private static final String TAG = "Client Signup";
 
     private static final int MY_PERMISSION_REQUEST_CODE = 71;
@@ -71,6 +86,24 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
     private static int FASTEST_INTERVAL = 3000;
     private static int DISTANCE = 10;
 
+    FusedLocationProviderClient fusedLocationProviderClient;
+    LocationRequest locationRequest;
+    LocationCallback locationCallback;
+    LocationManager locationManager;
+    LocationListener locationListener;
+
+
+    private DatePickerDialog.OnDateSetListener DOBDate =
+            new DatePickerDialog.OnDateSetListener() {
+                @Override
+                public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
+                    DOBcalendar.set(Calendar.YEAR, i);
+                    DOBcalendar.set(Calendar.MONTH, i1);
+                    DOBcalendar.set(Calendar.DAY_OF_MONTH, i2);
+                    edtTxtDOB.setText(new SimpleDateFormat("yyyy-MM-dd").format(DOBcalendar.getTime()));
+
+                }
+            };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -82,12 +115,19 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
         profile.setOnClickListener(this);
         signup.setOnClickListener(this);
         vendorsignup.setOnClickListener(this);
+        btnPickBirthDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new DatePickerDialog(ClientSignup.this,
+                        DOBDate, DOBcalendar.get(Calendar.YEAR),  DOBcalendar.get(Calendar.MONTH),
+                        DOBcalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
 
         coordinates.setOnClickListener(this);
 
         mAuth = FirebaseAuth.getInstance();
         back.setOnClickListener(this);
-
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
@@ -97,89 +137,11 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
                     Manifest.permission.ACCESS_FINE_LOCATION
             }, MY_PERMISSION_REQUEST_CODE);
         } else {
-            if (checkPlayServices()) {
-
-                buildGoogleApiClient();
-                createLocationRequest();
-            }
+            // displayLocation();
         }
 
     }
 
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSION_REQUEST_CODE: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (checkPlayServices()) {
-
-                        buildGoogleApiClient();
-                        createLocationRequest();
-                        displayLocation();
-                    }
-                }
-            }
-        }
-    }
-
-    private void displayLocation() {
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return;
-        }
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
-            latitude = mLastLocation.getLatitude();
-            longitude = mLastLocation.getLongitude();
-
-            try {
-                Geocoder geocoder = new Geocoder(ClientSignup.this, Locale.getDefault());
-                List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
-                address = addressList.get(0).getAddressLine(0);
-                addres.setText(address);
-                city = addressList.get(0).getLocality();//city
-                state = addressList.get(0).getAdminArea();//region
-                country = addressList.get(0).getCountryName();//country
-                district = addressList.get(0).getSubAdminArea();//district
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            Toast.makeText(ClientSignup.this, "Couldnt get the location", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(UPDATE_INTERVAL);
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-        mLocationRequest.setSmallestDisplacement(DISTANCE);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
-    private void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks((GoogleApiClient.ConnectionCallbacks) this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API).build();
-        mGoogleApiClient.connect();
-    }
-
-    private boolean checkPlayServices() {
-        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, this, PLAY_SERVICES_RES_REQUEST).show();
-            } else {
-                Toast.makeText(this, "This device is not supported", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-            return false;
-        }
-        return true;
-    }
 
 
     private void hooks() {
@@ -194,6 +156,8 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
         addres = findViewById(R.id.editaddress);
         profile = findViewById(R.id.profile);
         vendorsignup = findViewById(R.id.vndrsignup);
+        btnPickBirthDate = findViewById(R.id.btnPickInitDate);
+        edtTxtDOB = findViewById(R.id.edtTxtInitDate);
         progressDialog = new ProgressDialog(ClientSignup.this);
         mStorage = FirebaseStorage.getInstance();
 
@@ -202,6 +166,7 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
 
     private boolean validatefields() {
         sname = name.getText().toString().trim();
+        sdob = edtTxtDOB.getText().toString().trim();
         semail = email.getText().toString().trim();
         sphonenumber = phonenumber.getText().toString().trim();
         spass = pass.getText().toString().trim();
@@ -211,6 +176,11 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
         if (TextUtils.isEmpty(sname)) {
             name.setError("Name Field Cant Be Empty");
             name.requestFocus();
+            return false;
+        }
+        if (TextUtils.isEmpty(sdob)) {
+            edtTxtDOB.setError("Please Select Birth Date");
+            edtTxtDOB.requestFocus();
             return false;
         }
         if (TextUtils.isEmpty(semail)) {
@@ -250,7 +220,7 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.cordinates:
-                displayLocation();
+               // displayLocation();
                 break;
             case R.id.btnsgnup:
                 sname = name.getText().toString().trim();
@@ -258,6 +228,7 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
                 sphonenumber = phonenumber.getText().toString().trim();
                 spass = pass.getText().toString().trim();
                 srepass = repass.getText().toString().trim();
+                sdob = edtTxtDOB.getText().toString().trim();
 
                 if (!validatefields()) {
                     return;
@@ -328,6 +299,7 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
             hashMap.put("name", "" + sname);
             hashMap.put("phone", "" + sphonenumber);
             hashMap.put("address", "" + address);
+            hashMap.put("birthdate", "" + sdob);
             hashMap.put("city", "" + city);
             hashMap.put("state", "" + state);
             hashMap.put("country", "" + country);
@@ -374,6 +346,7 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
                             hashMap.put("name", "" + sname);
                             hashMap.put("phone", "" + sphonenumber);
                             hashMap.put("address", "" + address);
+                            hashMap.put("birthdate", "" + sdob);
                             hashMap.put("city", "" + city);
                             hashMap.put("state", "" + state);
                             hashMap.put("country", "" + country);
@@ -409,57 +382,106 @@ public class ClientSignup extends AppCompatActivity implements GoogleApiClient.C
 
         }
     }
-
-
-    public void onConnected(Bundle bundle) {
-        displayLocation();
-        startLocationUpdates();
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case MY_PERMISSION_REQUEST_CODE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    displayLocation();
+                }
+            }
+        }
     }
+    private void displayLocation() {
 
-    private void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
             return;
         }
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-    }
 
-    @Override
-    public void onConnectionSuspended(int i) {
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        mLastLocation = location;
-
-        // displayLocation();
-    }
-
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
-
-    protected void onStart() {
-        super.onStart();
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            startLocationUpdates();
+        } else {
+            startLegacyLocationUpdates();
+            //  Toast.makeText(getApplicationContext(), "Device Not supported", Toast.LENGTH_SHORT).show();
         }
     }
 
-    protected void onStop() {
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.disconnect();
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    private void startLocationUpdates() {
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location location : locationResult.getLocations()) {
+                    longitude = location.getLongitude();
+                    latitude = location.getLatitude();
+
+                    getLocationAddress(longitude, latitude);
+
+                    //  Toast.makeText(getApplicationContext(), "Address " + longitude, Toast.LENGTH_SHORT).show();
+                }
+            }
+        };
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
         }
-        super.onStop();
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startLegacyLocationUpdates() {
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (android.location.LocationListener) locationListener);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, (android.location.LocationListener) locationListener);
+        } else {
+            Toast.makeText(getApplicationContext(), "Location Services Are Disabled\nPlease enable GPS or " +
+                    "network provider", Toast.LENGTH_LONG).show();
+        }
+
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                longitude = location.getLongitude();
+                latitude = location.getLatitude();
+
+                getLocationAddress(longitude, latitude);
+            }
+
+        };
+
+    }
+
+    private void getLocationAddress(Double longitude, Double latitude) {
+        try {
+            Geocoder geocoder = new Geocoder(ClientSignup.this, Locale.getDefault());
+            List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
+            address = addressList.get(0).getAddressLine(0);
+
+            Toast.makeText(getApplicationContext(), "Address: " + address, Toast.LENGTH_SHORT).show();
+            addres.setText(address);
+            city = addressList.get(0).getLocality();//city
+            state = addressList.get(0).getAdminArea();//region
+            country = addressList.get(0).getCountryName();//country
+            district = addressList.get(0).getSubAdminArea();//district
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        checkPlayServices();
+    protected void onDestroy() {
+        super.onDestroy();
+        stopLocationUpdates();
     }
+
 }

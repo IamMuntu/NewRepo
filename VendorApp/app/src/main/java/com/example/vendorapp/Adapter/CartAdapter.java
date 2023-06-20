@@ -52,7 +52,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
         imageUri = cartModel.getITEM_IMAGE();
 
         try {
-            Picasso.with(context).load(imageUri).into(holder.imageView);
+            Picasso.get().load(imageUri).into(holder.imageView);
         } catch (Exception e) {
             holder.imageView.setImageResource(R.drawable.item);
         }

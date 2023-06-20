@@ -93,7 +93,7 @@ public class RetrieveAdapter extends FirebaseRecyclerAdapter<ItemModel, Retrieve
         imageUri = null;
         imageUri = itemModel.getImage();
         try {
-            Picasso.with(context).load(imageUri).into(viewHolder.imageView);
+            Picasso.get().load(imageUri).into(viewHolder.imageView);
         } catch (Exception e) {
             viewHolder.imageView.setImageResource(R.drawable.item);
         }

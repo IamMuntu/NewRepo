@@ -93,7 +93,7 @@ public class MyFirebaseMessaging extends FirebaseMessagingService {
             intent.addFlags(intent.FLAG_ACTIVITY_SINGLE_TOP);
         }
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         Bitmap largeicon = BitmapFactory.decodeResource(getResources(), R.drawable.cart);
 

@@ -1,5 +1,6 @@
 package com.example.vendorapp.Fragments;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.database.Cursor;
@@ -76,6 +77,7 @@ public class FragmentCart extends Fragment {
     //final String timestamp = "" + System.currentTimeMillis();
 
 
+    @SuppressLint("Range")
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.cartrecycler, container, false);
 
@@ -125,11 +127,11 @@ public class FragmentCart extends Fragment {
         Cursor cursor = databaseManager.fetch();
         if (cursor.moveToFirst()) {
             do {
-                int _id = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.ID));
-                String nme = cursor.getString(cursor.getColumnIndex(DatabaseHelper.ITEM));
-                int qty = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.QUANTITY));
-                String img = cursor.getString(cursor.getColumnIndex(DatabaseHelper.ITEM_IMAGE));
-                int total1 = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.TOTAL_AMOUNT));
+                @SuppressLint("Range") int _id = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.ID));
+                @SuppressLint("Range") String nme = cursor.getString(cursor.getColumnIndex(DatabaseHelper.ITEM));
+                @SuppressLint("Range") int qty = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.QUANTITY));
+                @SuppressLint("Range") String img = cursor.getString(cursor.getColumnIndex(DatabaseHelper.ITEM_IMAGE));
+                @SuppressLint("Range") int total1 = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.TOTAL_AMOUNT));
                 String pid1 = cursor.getString(cursor.getColumnIndex(DatabaseHelper.PRODUCT_ID));
                 sid1 = cursor.getString(cursor.getColumnIndex(DatabaseHelper.SHOP_ID));
 
@@ -158,6 +160,7 @@ public class FragmentCart extends Fragment {
                 Query query = FirebaseDatabase.getInstance().getReference("Users").child(sid1).child("Orders")
                         .orderByChild("orderBy").equalTo(firebaseAuth.getUid()).limitToLast(1);
                 query.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @SuppressLint("Range")
                     @Override
                     public void onDataChange(DataSnapshot snapshot) {
                         if (snapshot.exists()) {

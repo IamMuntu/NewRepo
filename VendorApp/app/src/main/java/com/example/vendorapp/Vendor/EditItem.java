@@ -95,7 +95,7 @@ public class EditItem extends AppCompatActivity implements View.OnClickListener 
                     icon = itemProfile.getImage();
 
                     try {
-                        Picasso.with(getApplicationContext()).load(itemProfile.getImage()).into(imageView);
+                        Picasso.get().load(itemProfile.getImage()).into(imageView);
                     } catch (Exception e) {
                         imageView.setImageResource(R.drawable.item);
                     }

@@ -117,7 +117,7 @@ public class UpdateProfile extends AppCompatActivity implements GoogleApiClient.
                  profileimg = profile1.getImage();
 
                  try{
-                     Picasso.with(getApplicationContext()).load(profileimg).into(profile);
+                     Picasso.get().load(profileimg).into(profile);
                  }catch (Exception e){
                      profile.setImageResource(R.drawable.profile);
                  }
@@ -150,6 +150,7 @@ public class UpdateProfile extends AppCompatActivity implements GoogleApiClient.
        
     }
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case MY_PERMISSION_REQUEST_CODE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

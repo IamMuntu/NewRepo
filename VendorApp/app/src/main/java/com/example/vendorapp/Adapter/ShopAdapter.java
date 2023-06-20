@@ -54,7 +54,7 @@ public class ShopAdapter extends FirebaseRecyclerAdapter<ShopModel, ShopAdapter.
         imageUri = null;
         imageUri = shopModel.getImage();
         try {
-            Picasso.with(context).load(imageUri).into(viewHolder.imageView);
+            Picasso.get().load(imageUri).into(viewHolder.imageView);
         } catch (Exception e) {
             viewHolder.imageView.setImageResource(R.drawable.profile);
         }

@@ -140,7 +140,7 @@
                     android:drawableLeft="@drawable/profile"
                     android:drawablePadding="5dp"
                     android:drawableTint="@color/black"
-                    android:hint="Enter Business Name"
+                    android:hint="Target University"
                     android:textColor="@color/greyish"></EditText>
 
                 <EditText

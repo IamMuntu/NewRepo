@@ -76,7 +76,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.AdapterViewHolder> {
             imageUri = null;
             imageUri = shopModel.getImage();
             try {
-                Picasso.with(context).load(imageUri).into(imageView);
+                Picasso.get().load(imageUri).into(imageView);
             } catch (Exception e) {
                 imageView.setImageResource(R.drawable.profile);
             }

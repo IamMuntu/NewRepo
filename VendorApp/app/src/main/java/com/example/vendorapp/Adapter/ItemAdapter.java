@@ -63,7 +63,7 @@ public class ItemAdapter extends FirebaseRecyclerAdapter<ItemModel, ItemAdapter.
         imageUri = null;
         imageUri = itemModel.getImage();
         try {
-            Picasso.with(context).load(imageUri).into(viewHolder.imageView);
+            Picasso.get().load(imageUri).into(viewHolder.imageView);
         } catch (Exception e) {
             viewHolder.imageView.setImageResource(R.drawable.item);
         }
@@ -121,7 +121,7 @@ public class ItemAdapter extends FirebaseRecyclerAdapter<ItemModel, ItemAdapter.
         });
 
         try {
-            Picasso.with(context).load(productimage).into(imageView);
+            Picasso.get().load(productimage).into(imageView);
         } catch (Exception e) {
             imageView.setImageResource(R.drawable.item);
         }

@@ -40,7 +40,7 @@ public class ProductFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_product1, container, false);
+        View view = inflater.inflate(R.layout.fragment_product, container, false);
         setHasOptionsMenu(true);
 /*
         Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolBar);

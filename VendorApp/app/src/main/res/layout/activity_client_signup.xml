@@ -68,8 +68,7 @@
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_below="@+id/menu4">
+            android:layout_marginTop="5dp">
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -141,11 +140,38 @@
                     android:hint="@string/enter_your_phone_number"
                     android:textColor="@color/greyish"></EditText>
 
+                <RelativeLayout
+                    android:id="@+id/pickInitDateRelLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/edit_text_style"
+                    android:layout_below="@+id/editphone"
+                    android:layout_marginTop="20dp">
+
+                    <Button
+                        android:id="@+id/btnPickInitDate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginLeft="10dp"
+                        android:background="@drawable/button_style"
+                        android:text="Pick Date"
+                        android:textColor="@color/white" />
+
+                    <EditText
+                        android:id="@+id/edtTxtInitDate"
+                        android:layout_width="301dp"
+                        android:layout_height="wrap_content"
+                        android:layout_toLeftOf="@+id/btnPickInitDate"
+                        android:hint="Date Of Birth" />
+                </RelativeLayout>
+
+
                 <EditText
                     android:id="@+id/editaddress"
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
-                    android:layout_below="@+id/editphone"
+                    android:layout_below="@+id/pickInitDateRelLayout"
                     android:layout_marginStart="5dp"
                     android:layout_marginTop="21dp"
                     android:layout_marginEnd="5dp"
